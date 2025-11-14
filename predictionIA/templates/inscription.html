@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+     <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Inscription</title>
+  </head>
+  <body>
+    <div class="container">
+    <form method="post" action="{% url 'predictionIA:inscription' %} ">
+      {% csrf_token %}
+      <div class="el2"> 
+                   <h1>Inscription</h1>
+                    {%  if messages %}
+                 <div class="error-messages">
+                    {% for message in messages %}
+                    <p class="error">{{ message }} </p>
+                    {% endfor %}
+                </div> 
+                {% endif %}
+        <div class="form-control">
+          <input type="text" name="username"  autocapitalize="none" autocomplete="username"  aria-describedby="id_username_helptext" id="id_username">
+          <label for="username">Nom</label>
+        </div>
+
+        <div class="form-control">
+          <input type="password" name="password1" autocomplete="new-password" required="" id="id_password1">
+          <label for="id_password1">Mot de passe</label>
+        </div>
+        <div class="form-control">
+          <input type="password" name="password2" autocomplete="new-password" required="" id="id_password2">
+          <label for="id_password2">Confirmer le mot de passe</label>
+        </div>
+
+        <button class="btn">S'incrires</button>
+
+        <p class="text">Déjà inscrit?<a href="{% url 'predictionIA:index' %}">Se connécter</a> </p>
+      </form>
+    </div>
+<script >
+        const labels = document.querySelectorAll('.form-control label')
+
+labels.forEach(label => {
+    label.innerHTML = label.innerText
+        .split('')
+        .map((letter, idx) => `<span style="transition-delay:${idx * 50}ms">${letter}</span>`)
+        .join('')
+    })
+</script>
+  </body>
+</html>

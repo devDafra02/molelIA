@@ -1,0 +1,201 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Monitoring — Ligne d’ancrage offshore</title>
+  <style>
+    :root{
+      --bg1: #00111f; /* bleu très foncé (mer profonde) */
+      --bg2: #00334d; /* bleu marine */
+      --bg3: #005f73; /* vert océan */
+      --accent: #00c2ff; /* cyan lumineux */
+      --muted: #94a3b8;
+    }
+    html,body{height:100%;margin:0;font-family:"Segoe UI",Roboto,Arial}
+    body{
+      background: radial-gradient(circle at 20% 30%,var(--bg3) 0%,var(--bg1) 100%);
+      color:white;
+      display:flex;align-items:center;justify-content:center;
+      padding:32px;
+      overflow:hidden;
+    }
+
+    /* Effet vagues animées */
+    body::before{
+      content:"";
+      position:absolute;top:0;left:0;right:0;bottom:0;
+      background:radial-gradient(circle at 50% 120%,rgba(0,194,255,0.2),transparent 70%);
+      animation: waves 8s infinite alternate ease-in-out;
+    }
+    @keyframes waves{from{transform:translateY(0)}to{transform:translateY(-20px)}}
+
+    .container{
+      width:100%;max-width:1150px;
+      background:rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      border-radius:16px;
+      box-shadow:0 10px 40px rgba(0,0,0,0.6);
+      overflow:hidden;
+      display:grid;
+      grid-template-columns:1fr 420px;
+      z-index:1;
+    }
+
+    /* Zone gauche (formulaire) */
+    .left{padding:32px}
+    h1{margin:0 0 8px;font-size:24px;color:var(--accent)}
+    p.lead{margin:0 0 20px;color:rgba(255,255,255,0.8)}
+
+    .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+    .field{display:flex;flex-direction:column}
+    label{font-size:13px;margin-bottom:6px}
+    input[type="number"]{
+      padding:10px 12px;border-radius:8px;border:none;outline:none;font-size:14px;
+      background:rgba(255,255,255,0.07);color:white;
+      transition:0.2s;
+    }
+    input[type="number"]:focus{box-shadow:0 0 0 2px var(--accent)}
+
+    .actions{display:flex;gap:10px;margin-top:20px}
+    button.btn{
+      border:none;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer;
+      transition:0.2s;
+    }
+    button.primary{background:linear-gradient(90deg,#00c2ff,#3b82f6);color:white}
+    button.primary:hover{transform:scale(1.05)}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.2);color:white}
+    button.ghost:hover{background:rgba(255,255,255,0.08)}
+
+    .result{
+      margin-top:20px;padding:14px;border-radius:12px;
+      background:rgba(0,0,0,0.3);
+      border-left:4px solid var(--accent);
+      font-size:15px;
+    }
+    .result b{display:inline-block;width:160px}
+
+    /* Zone droite (aperçu arbre) */
+    .right{padding:24px;background:rgba(255,255,255,0.02)}
+    .card{
+      background:rgba(0,0,0,0.35);
+      padding:18px;border-radius:14px;
+      border:1px solid rgba(255,255,255,0.08);
+    }
+    .tree{
+      margin-top:14px;border-radius:8px;overflow:hidden;
+      border:1px solid rgba(255,255,255,0.06);
+    }
+    img{display:block;width:100%;height:auto}
+
+    a.link{color:var(--accent);text-decoration:none;font-size:13px}
+    a.link:hover{text-decoration:underline}
+
+    @media(max-width:900px){
+      .container{grid-template-columns:1fr}
+      .form-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Gauche : formulaire -->
+    <div class="left">
+      <h1>⚓ Surveillance — Ligne d’ancrage</h1>
+      <p class="lead">Entrez les données en temps réel et surveillez l’état de l’ancrage offshore.</p>
+
+      <form id="predict-form" onsubmit="return false;">
+        <div class="form-grid">
+           {% for f, unit in feature_hint %}
+    <div class="field">
+      <label for="f_{{ forloop.counter0 }}">{{ f }}</label>
+      <div style="display:flex;align-items:center;gap:6px">
+        <input type="number" step="any" id="f_{{ forloop.counter0 }}" name="{{ f }}" placeholder="Valeur numérique">
+        <span style="font-size:13px;color:#94a3b8">{{ unit }}</span>
+      </div>
+    </div>
+  {% endfor %}
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" id="btn-predict">Prédire</button>
+          <button class="btn ghost" id="btn-reset" type="reset">Réinitialiser</button>
+        </div>
+
+        <div class="result" id="result" style="display:none">
+          <div><b>État prédit :</b> <span id="pred_label"></span></div>
+          <div><b>Confiance :</b> <span id="pred_proba"></span></div>
+          <div><b>Durée restante :</b> <span id="pred_duree"></span></div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Droite : arbre -->
+    <div class="right">
+      <div class="card">
+        <h3 style="margin:0 0 6px;color:var(--accent)">Aperçu d'arbre</h3>
+        <p style="margin:0;color:rgba(255,255,255,0.75);font-size:13px">Un arbre de décision de la forêt (profondeur limitée).</p>
+
+        <div class="tree">
+          <img id="tree_img" src="{% url 'predictionIA:tree' %}?i=0" alt="Arbre de décision">
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:13px">Choisir arbre :</label>
+          <input type="number" id="tree_index" value="0" min="0" style="width:70px;padding:6px;border-radius:6px;border:none;background:rgba(255,255,255,0.1);color:white">
+          <button class="btn ghost" id="btn-load-tree">Charger</button>
+          <a class="link" href="{% url 'predictionIA:history' %}">📜 Historique</a>
+          <a class="link" href="{% url 'predictionIA:deconnexion' %}" style="color:#f87171">🚪 Déconnexion</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function getCookie(name){
+      const v=document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)');
+      return v ? decodeURIComponent(v.pop()) : null;
+    }
+    const csrftoken=getCookie('csrftoken');
+
+    function collectForm(){
+      const inputs=document.querySelectorAll('#predict-form input[name]');
+      const out={};
+      inputs.forEach(i=>{if(i.value.trim()!==''){out[i.name]=Number(i.value);}});
+      return out;
+    }
+
+    document.getElementById('btn-predict').addEventListener('click',async(e)=>{
+      e.preventDefault();
+      const features=collectForm();
+      if(Object.keys(features).length===0){alert('Veuillez renseigner au moins une valeur.');return;}
+      const resBox=document.getElementById('result');resBox.style.display='block';
+      document.getElementById('pred_label').textContent='Calcul...';
+      document.getElementById('pred_proba').textContent='';
+      document.getElementById('pred_duree').textContent='';
+
+      try{
+        const resp=await fetch('{% url "predictionIA:predict" %}',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken||''},
+          body:JSON.stringify({features})
+        });
+        const data=await resp.json();
+        if(data.success){
+          document.getElementById('pred_label').textContent=data.result.etat_label||'—';
+          document.getElementById('pred_proba').textContent=data.result.etat_proba?(Math.round(data.result.etat_proba*100)/100):'—';
+          document.getElementById('pred_duree').textContent=data.result.duree_restant?(Math.round(data.result.duree_restant*100)/100):'—';
+        }else{
+          document.getElementById('pred_label').textContent='Erreur: '+(data.error||'unknown');
+        }
+      }catch(err){
+        document.getElementById('pred_label').textContent='Erreur fetch';
+      }
+    });
+
+    document.getElementById('btn-reset').addEventListener('click',()=>{document.getElementById('result').style.display='none';});
+    document.getElementById('btn-load-tree').addEventListener('click',()=>{const i=document.getElementById('tree_index').value||0;document.getElementById('tree_img').src='{% url "predictionIA:tree" %}?i='+encodeURIComponent(i)+'&_='+Date.now();});
+  </script>
+</body>
+</html>

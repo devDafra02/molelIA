@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+     <link rel="stylesheet" href="{% static 'style.css' %}">
+    <title>Form Input Wave</title>
+  </head>
+  <body>
+    <div class="container">
+    <form method="post" action="{% url 'predictionIA:index' %}">
+        {% csrf_token %}
+        <div class="el1"> 
+                <h1>Connexion</h1>
+                {%  if messages %}
+                 <div class="messages">
+                    {% for message in messages %}
+                    <p class="error">{{ message }} </p>
+                    {% endfor %}
+                </div> 
+                {% endif %}
+        <div class="form-control">
+          <input type="text" name="username">
+          <label for="username">Nom d'utilisateur</label>
+        </div>
+
+        <div class="form-control">
+          <input type="password" name="password">
+          <label form="password">Password</label>
+        </div>
+
+        <button class="btn">Se connecter</button>
+
+        <p class="text">je n'ai pas de compte? <a href="{% url 'predictionIA:inscription' %} ">Inscrit</a> </p>
+      </form>
+    </div>
+<script >
+        const labels = document.querySelectorAll('.form-control label')
+
+labels.forEach(label => {
+    label.innerHTML = label.innerText
+        .split('')
+        .map((letter, idx) => `<span style="transition-delay:${idx * 50}ms">${letter}</span>`)
+        .join('')
+    })
+</script>
+  </body>
+</html>

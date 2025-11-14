@@ -1,0 +1,74 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Historique — Monitoring</title>
+  <style>
+    :root{
+      --bg1: #0f172a;
+      --bg2: #2563eb;
+      --muted: #94a3b8;
+      --accent: #60a5fa;
+    }
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial}
+    body{background: linear-gradient(180deg,var(--bg1),var(--bg2));color:#0b1220;display:flex;align-items:center;justify-content:center;padding:32px}
+
+    .container{width:100%;max-width:1200px;background:rgba(255,255,255,0.05);backdrop-filter: blur(6px);border-radius:14px;box-shadow:0 10px 30px rgba(2,6,23,0.6);overflow:auto;padding:24px;color:white}
+
+    h2{margin-top:0;font-size:22px;color:white;text-align:center;margin-bottom:20px}
+
+    table{width:100%;border-collapse:collapse;margin-top:10px;background:rgba(255,255,255,0.04);border-radius:10px;overflow:hidden}
+    thead{background:rgba(255,255,255,0.08)}
+    th,td{padding:10px 12px;text-align:left;font-size:13px;color:white}
+    th{font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:0.6px}
+    tr:nth-child(even){background:rgba(255,255,255,0.03)}
+    tr:hover{background:rgba(96,165,250,0.15)}
+
+    .btn-back{display:inline-block;margin-top:20px;padding:10px 14px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.2);color:white;text-decoration:none;font-size:14px;transition:0.2s}
+    .btn-back:hover{background:rgba(255,255,255,0.1)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Historique de vos prédictions</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Vent (m/s)</th>
+          <th>Vagues (m)</th>
+          <th>Courant (m/s)</th>
+          <th>Taux corrosion annual (mm/ans)</th>
+          <th>Periode des vagues (s)</th>
+          <th>État prédit</th>
+          <th>Confiance</th>
+          <th>Durée restante</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in predictions %}
+          <tr>
+            <td>{{ p.created_at|date:"Y-m-d H:i" }}</td>
+            <td>{{ p.input_features.Vitesse_vent|default:"—" }}</td>
+            <td>{{ p.input_features.Hauteur_vagues|default:"—" }}</td>
+            <td>{{ p.input_features.Vitesse_courant|default:"—" }}</td>
+            <td>{{ p.input_features.Taux_corrosion|default:"—" }}</td>
+            <td>{{ p.input_features.Periode_vagues|default:"—" }}</td>
+            <td>{{ p.etat_label }}</td>
+            <td>{{ p.etat_proba|floatformat:2|default:"—" }}</td>
+            <td>{{ p.duree_restant|floatformat:2|default:"—" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="9" style="text-align:center;color:#94a3b8">Aucune prédiction enregistrée</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div style="text-align:center">
+      <a class="btn-back" href="{% url 'predictionIA:chat' %}">⬅ Retour à la prédiction</a>
+    </div>
+  </div>
+</body>
+</html>
